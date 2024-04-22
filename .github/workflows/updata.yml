@@ -2,8 +2,8 @@ name: Sync Fork with Upstream
 
 on:
   schedule:
-    - cron: "0 0 * * *"
-  workflow_dispatch: # 添加手动触发器
+    - cron: "0 0 * * *" # 每天午夜执行一次
+  workflow_dispatch:
     inputs:
       sync:
         description: 'Sync with upstream manually'
@@ -15,17 +15,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          ref: main # 使用你的分支名，如 main、master 等
       
       - name: Fetch upstream changes
-        run: git fetch upstream
-        continue-on-error: true
+        run: git fetch origin +refs/heads/main:refs/remotes/origin/main # 强制获取完整的主分支历史记录
       
       - name: Check out main branch
         run: git checkout main
       
-      - name: Merge upstream changes
-        run: git merge upstream/main --ff-only
-        continue-on-error: true
+      - name: Reset to origin/main
+        run: |
+          git reset --hard origin/main
+          git clean -df # 移除未追踪的文件和目录
       
       - name: Push changes to fork
         uses: ad-m/github-push-action@master
